@@ -3,6 +3,8 @@ import Navigation from '../components/Navigation';
 import { usePrivy } from "@privy-io/react-auth";
 import { motion } from 'framer-motion';
 import { IoStatsChart, IoTrendingUp, IoTime, IoCheckmarkDone, IoWallet } from 'react-icons/io5';
+import { useContractWrite, UseContractWriteConfig } from 'wagmi'
+import PlatinumNFTABI from '../contracts/PlatinumNFT.json'
 
 const ProfileScreen = () => {
   const { ready, authenticated, logout, user } = usePrivy();
@@ -34,6 +36,12 @@ const ProfileScreen = () => {
     { id: 'earnings', label: 'Earnings', icon: IoWallet },
     { id: 'activities', label: 'Activities', icon: IoTime },
   ];
+
+  const { write: mintPlatinumNFT } = useContractWrite({
+    address: '0x1234567890123456789012345678901234567890', // TODO: Replace
+    abi: PlatinumNFTABI,
+    functionName: 'mint'
+  } as UseContractWriteConfig)
 
   if (!ready) {
     return (
