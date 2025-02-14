@@ -1,4 +1,4 @@
-![Tapp Banner](public/banner.png)
+![Tapp Banner](public/Screenshot 2025-02-14 at 08.45.36.png)
 
 *Building the future of private, incentivized data labeling on EDUChain* 🚀
 
