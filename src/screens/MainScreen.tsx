@@ -1,8 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline } from 'react-icons/io5';
+import { toast } from 'react-toastify';
+import { FaHeart, FaTimes } from 'react-icons/fa';
+import { useZkVerify } from '../hooks/useZkVerify';
+import { zkVerifySession, Library, CurveType, ZkVerifyEvents } from 'zkverifyjs';
 
 const categories = [
   'automobile',
@@ -36,11 +40,73 @@ const getImagesForCategory = (category: string) => {
   ];
 };
 
+interface VerifyInput {
+  verificationKey: {
+    protocol: string;
+    curve: string;
+    data: {
+      alpha: string[];
+      beta: string[][];
+      gamma: string[];
+      delta: string[];
+      gamma_abc: string[][];
+    }
+  };
+  proof: {
+    protocol: string;
+    curve: string;
+    data: {
+      pi_a: string[];
+      pi_b: string[][];
+      pi_c: string[];
+    }
+  };
+  publicSignals: number[];
+  verificationKeyHash?: string;
+}
+
+interface EventData {
+  statementHash: string;
+  blockHash: string;
+  transactionHash: string;
+  extrinsicIndex: number;
+  fee?: { toString: () => string };
+  weight?: {
+    refTime: { toString: () => string };
+    proofSize: { toString: () => string };
+  };
+  attestationId: number;
+  leafDigest: string;
+  attestationHash: string;
+}
+
 interface UserSelection {
   category: string;
   label: number;
   timestamp: number;
+  verificationHash?: string;
 }
+
+const ConsoleMessage = ({ message, delay }: { message: string, delay: number }) => {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  if (!show) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-sm font-mono text-green-400 mb-2"
+    >
+      {`> ${message}`}
+    </motion.div>
+  );
+};
 
 const CatConfirmationScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('cat');
@@ -51,8 +117,95 @@ const CatConfirmationScreen = () => {
   const [dragX, setDragX] = useState(0);
   const [userSelections, setUserSelections] = useState<UserSelection[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
+  const [showConsole, setShowConsole] = useState(false);
+  const [consoleStep, setConsoleStep] = useState(0);
+  const { verifyProof, isVerifying } = useZkVerify();
 
   const currentData = getImagesForCategory(selectedCategory);
+
+  const createAttestation = async (selections: string[]) => {
+    try {
+      // Initialize session with testnet
+      const session = await zkVerifySession.start()
+        .Testnet()
+        .withAccount(process.env.REACT_APP_SEED_PHRASE || '');
+
+      // Generate proof using selections
+      const verifyInput: VerifyInput = {
+        verificationKey: {
+          protocol: "groth16",
+          curve: "bn128",
+          data: {
+            alpha: ["1", "2"],
+            beta: [["3", "4"], ["5", "6"]],
+            gamma: ["7", "8"],
+            delta: ["9", "10"],
+            gamma_abc: [["11", "12"], ["13", "14"]]
+          }
+        },
+        proof: {
+          protocol: "groth16",
+          curve: "bn128",
+          data: {
+            pi_a: ["15", "16"],
+            pi_b: [["17", "18"], ["19", "20"]],
+            pi_c: ["21", "22"]
+          }
+        },
+        publicSignals: [1, 2, 3]
+      };
+
+      // Register verification key and get hash
+      const { events: regEvents } = await session
+        .registerVerificationKey()
+        .groth16(Library.snarkjs, CurveType.bn128)
+        .execute(verifyInput);
+
+      const vkeyHash = await new Promise<string>((resolve, reject) => {
+        regEvents.on(ZkVerifyEvents.Finalized, (eventData: EventData) => {
+          console.log("Verification key registered:", eventData.statementHash);
+          resolve(eventData.statementHash);
+        });
+
+        regEvents.on('error', (error) => {
+          console.error("Verification key registration error:", error);
+          reject(error);
+        });
+      });
+
+      // Create attestation with the proof
+      const attestation = await session
+        .verify()
+        .groth16(Library.snarkjs, CurveType.bn128)
+        .execute({
+          proofData: {
+            vk: vkeyHash,
+            proof: verifyInput.proof,
+            publicSignals: verifyInput.publicSignals
+          }
+        });
+
+      const { events } = attestation;
+
+      // Wait for attestation to be finalized
+      await new Promise<void>((resolve, reject) => {
+        events.on(ZkVerifyEvents.Finalized, (eventData: EventData) => {
+          console.log("Attestation finalized:", eventData);
+          toast.success('✅ Attestation created successfully!');
+          resolve();
+        });
+
+        events.on('error', (error) => {
+          console.error("Attestation error:", error);
+          reject(error);
+        });
+      });
+
+    } catch (error: any) {
+      console.error('Failed to create attestation:', error);
+      toast.error('❌ Failed to create attestation: ' + error.message);
+    }
+  };
 
   const onTaskComplete = async () => {
     const newSwipeCount = swipeCount + 1;
@@ -61,8 +214,20 @@ const CatConfirmationScreen = () => {
     if (newSwipeCount === 3) {
       setIsPopupVisible(true);
       setPopupTitle("Great job! You've completed 3 tags!");
+      
+      // Create attestation for the completed tags
+      await createAttestation(["1", "2", "3"]);
+      
+      toast.success('🎉 Awesome! You completed 3 tags!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } else {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % currentData.length);
+      toast.info('Next image loaded!', {
+        position: "top-right",
+        autoClose: 1000,
+      });
     }
   };
 
@@ -101,6 +266,11 @@ const CatConfirmationScreen = () => {
       timestamp: Date.now()
     }]);
     
+    toast.success(isYes ? '✅ Marked as Yes' : '❌ Marked as No', {
+      position: "top-right",
+      autoClose: 1000,
+    });
+    
     await onTaskComplete();
   };
 
@@ -109,23 +279,31 @@ const CatConfirmationScreen = () => {
     setPopupTitle("");
     setSwipeCount(0);
     setUserSelections([]);
+    toast.info('Starting fresh!', {
+      position: "top-right",
+      autoClose: 2000,
+    });
   };
 
   const handleKeepTagging = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentData.length);
     handleClosePopup();
+    toast.success('Let\'s keep going! 💪', {
+      position: "top-right",
+      autoClose: 2000,
+    });
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#1a1b1e]">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#1a1b1e] to-[#2d2e32]">
       {/* Top Bar */}
-      <div className="sticky top-0 z-40 bg-[#1a1b1e] p-4 border-b border-gray-800">
+      <div className="sticky top-0 z-40 backdrop-blur-lg bg-[#1a1b1e]/80 p-4 border-b border-gray-800">
         <div className="flex justify-between items-center mb-2">
-          <h1 className="text-xl font-bold text-white">Tapp</h1>
+          <h1 className="text-2xl font-bold text-white bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">Tagster</h1>
         </div>
         {/* Question Header */}
         <div className="mt-2">
-          <p className="text-xl font-medium text-white text-center">
+          <p className="text-2xl font-medium text-white text-center bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
             {currentData[currentIndex].question}
           </p>
           <p className="text-sm text-gray-400 text-center mt-1">
@@ -142,7 +320,7 @@ const CatConfirmationScreen = () => {
             setSelectedCategory(e.target.value);
             setCurrentIndex(0);
           }}
-          className="w-full p-3 rounded-xl bg-[#2c2d30] text-white border border-gray-700 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5]"
+          className="w-full p-3 rounded-xl bg-[#2c2d30] text-white border border-gray-700 focus:border-[#4f46e5] focus:ring-1 focus:ring-[#4f46e5] transition-all duration-300"
         >
           {categories.map(category => (
             <option key={category} value={category}>
@@ -153,7 +331,7 @@ const CatConfirmationScreen = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden pb-16">
+      <div className="flex-1 overflow-hidden pb-16 px-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
@@ -161,17 +339,19 @@ const CatConfirmationScreen = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.3 }}
-            className="p-4 h-full"
+            className="h-full max-w-md mx-auto"
           >
             <motion.div
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
-              className="relative w-full aspect-square rounded-3xl overflow-hidden shadow-xl"
+              className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl"
               style={{
                 x: dragX,
-                cursor: "grab"
+                cursor: "grab",
+                perspective: "1000px",
+                transform: `rotateY(${dragX * 0.02}deg)`,
               }}
             >
               <img
@@ -180,17 +360,40 @@ const CatConfirmationScreen = () => {
                 className="w-full h-full object-cover"
               />
               
+              {/* Image Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+              
+              {/* Action Buttons */}
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center space-x-8">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
+                  onClick={() => handleButtonClick("", false)}
+                >
+                  <FaTimes className="w-8 h-8 text-white" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                  onClick={() => handleButtonClick("", true)}
+                >
+                  <FaHeart className="w-8 h-8 text-white" />
+                </motion.button>
+              </div>
+              
               {/* Swipe Indicators */}
               <div className="absolute inset-0 flex items-center justify-between px-6 pointer-events-none">
                 <AnimatePresence>
                   {swipeDirection === "left" && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      className="bg-red-500 rounded-full p-4"
+                      initial={{ opacity: 0, scale: 0.5, x: -50 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, x: -50 }}
+                      className="bg-red-500 rounded-full p-6 shadow-xl"
                     >
-                      <IoCloseCircleOutline className="w-12 h-12 text-white" />
+                      <FaTimes className="w-16 h-16 text-white" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -198,12 +401,12 @@ const CatConfirmationScreen = () => {
                 <AnimatePresence>
                   {swipeDirection === "right" && (
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      className="bg-green-500 rounded-full p-4"
+                      initial={{ opacity: 0, scale: 0.5, x: 50 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, x: 50 }}
+                      className="bg-green-500 rounded-full p-6 shadow-xl"
                     >
-                      <IoCheckmarkCircleOutline className="w-12 h-12 text-white" />
+                      <FaHeart className="w-16 h-16 text-white" />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -218,20 +421,26 @@ const CatConfirmationScreen = () => {
 
       {/* Popup */}
       {isPopupVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#2c2d30] rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-xl font-semibold text-white mb-4 text-center">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gradient-to-br from-[#2c2d30] to-[#1a1b1e] rounded-2xl p-8 w-full max-w-sm border border-gray-700/50"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6 text-center bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
               {popupTitle}
             </h3>
             <div className="flex justify-center space-x-4">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleKeepTagging}
-                className="px-6 py-3 bg-[#4f46e5] text-white rounded-xl font-medium hover:bg-[#4338ca] transition-colors"
+                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 text-white rounded-xl font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-300"
               >
                 Keep Tagging
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

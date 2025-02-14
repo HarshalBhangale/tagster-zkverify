@@ -3,6 +3,9 @@
 import React from 'react';
 import { useNavigate } from "react-router-dom";
 import { usePrivy } from '@privy-io/react-auth';
+import { toast } from 'react-toastify';
+import { FaBuilding } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 
 interface VideoCardProps {
   src: string;
@@ -43,9 +46,40 @@ const LoginScreen = () => {
 
   React.useEffect(() => {
     if (ready && authenticated) {
-      navigate('/screen3');
+      toast.success('Successfully authenticated! Redirecting...', {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      setTimeout(() => navigate('/screen3'), 1000);
     }
   }, [ready, authenticated, navigate]);
+
+  const handleLogin = async () => {
+    try {
+      toast.info('Connecting wallet...', {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      await login();
+    } catch (error) {
+      toast.error('Failed to connect wallet. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleCompanyAccess = () => {
+    navigate('/datasets');
+    toast.info('Welcome to the Dataset Management Portal', {
+      position: "top-right",
+      autoClose: 3000,
+    });
+  };
 
   return (
     <section className="flex flex-col pt-32 pb-0 relative w-full min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -90,9 +124,11 @@ const LoginScreen = () => {
           </div>
 
           <div className="flex items-center gap-4 justify-start my-10 relative z-10">
-            <button
-              onClick={login}
-              className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleLogin}
+              className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
             >
               Connect Wallet
               <svg
@@ -104,7 +140,26 @@ const LoginScreen = () => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </button>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCompanyAccess}
+              className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25"
+            >
+              <FaBuilding className="mr-2" />
+              Company Access
+              <svg
+                className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </motion.button>
           </div>
         </div>
 

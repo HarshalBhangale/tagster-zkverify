@@ -2,7 +2,8 @@
 
 *Building the future of private, incentivized data labeling on EDUChain* 🚀
 ## Video Link : https://www.loom.com/share/5da783c74c444e959a500abf7afc2e2b?sid=913ce085-cb36-4212-bc15-e316007d903f
-<div style="position: relative; padding-bottom: 65.03918022905366%; height: 0;"><iframe src="https://www.loom.com/embed/5da783c74c444e959a500abf7afc2e2b?sid=ed07ac31-c28a-4ea7-8003-b846bd114ec7" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+Main Video : https://www.youtube.com/watch?v=XSj3yEMYpCU
+
 # Tagster: Gamified Data Labeling for AI Models 🚀
 
 Welcome to Tagster! Our platform turns the task of labeling data into a fun, engaging, and rewarding experience. By gamifying data labeling, Tagster provides a unique way for users to contribute to AI development, while earning passive income. Companies upload their data, and users can label it through a TikTok/Instagram-like interface—making it easy and enjoyable to help AI models grow smarter.
@@ -179,7 +180,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Built with ❤️ by the Tagster Team
 
-![EDUChain](https://img.shields.io/badge/EDUChain-Powered-blue)
-![ZKVerify](https://img.shields.io/badge/ZKVerify-Protected-purple)
+![EDUChain](https://img.shields.io/badge/EDUChain-Powered-blue)![ZKVerify](https://img.shields.io/badge/ZKVerify-Protected-purple)
 
 </div> 
