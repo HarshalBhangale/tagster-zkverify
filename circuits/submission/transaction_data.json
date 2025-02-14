@@ -1,0 +1,21 @@
+{
+  "blockHash": "0x066d1d44d0f20baf6e41c30ee70d970bd730707c8c83d86ee6edab137b948a61",
+  "proofType": "groth16",
+  "status": "inBlock",
+  "txHash": "0x3faf0ab2ce0a6231199f4e5018f4de70b2c471bced215639729ada90c9688b07",
+  "extrinsicIndex": 1,
+  "feeInfo": {
+    "payer": "xph6yAFxrZr63XyV1M6x6uGgJUS4EuMh8Fs9DrKB4zedRdQ6k",
+    "actualFee": "3397966179",
+    "tip": "0",
+    "paysFee": "Yes"
+  },
+  "weightInfo": {
+    "refTime": "3397965740",
+    "proofSize": "177995"
+  },
+  "txClass": "Normal",
+  "attestationId": 44383,
+  "leafDigest": "0xa59bf8f72d4c00ab051989bd419a2654db7ea02795efbb1f2bf39de8043f3904",
+  "attestationConfirmed": false
+}

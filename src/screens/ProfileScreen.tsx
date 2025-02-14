@@ -3,8 +3,6 @@ import Navigation from '../components/Navigation';
 import { usePrivy } from "@privy-io/react-auth";
 import { motion } from 'framer-motion';
 import { IoStatsChart, IoTrendingUp, IoTime, IoCheckmarkDone, IoWallet } from 'react-icons/io5';
-import { useContractWrite, UseContractWriteConfig } from 'wagmi'
-import PlatinumNFTABI from '../contracts/PlatinumNFT.json'
 
 const ProfileScreen = () => {
   const { ready, authenticated, logout, user } = usePrivy();
@@ -37,12 +35,6 @@ const ProfileScreen = () => {
     { id: 'activities', label: 'Activities', icon: IoTime },
   ];
 
-  const { write: mintPlatinumNFT } = useContractWrite({
-    address: '0x1234567890123456789012345678901234567890', // TODO: Replace
-    abi: PlatinumNFTABI,
-    functionName: 'mint'
-  } as UseContractWriteConfig)
-
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -57,17 +49,44 @@ const ProfileScreen = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Top Bar */}
-      <div className="sticky top-0 z-40 bg-black/20 backdrop-blur-xl border-b border-white/10 p-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-white">Profile</h1>
-          {authenticated && (
-            <button
-              onClick={logout}
-              className="px-4 py-2 rounded-full bg-red-500/20 text-red-500 font-medium hover:bg-red-500/30 transition-colors"
-            >
-              Logout
-            </button>
-          )}
+      <div className="sticky top-0 z-40 bg-black/20 backdrop-blur-xl border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-white">Profile</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-600/20 text-emerald-400 font-medium hover:from-emerald-500/30 hover:to-teal-600/30 transition-all duration-300 border border-emerald-500/20 shadow-lg shadow-emerald-500/10"
+              >
+                Claim OG NFT
+              </button>
+              {authenticated && (
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 rounded-full bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 font-medium hover:from-red-500/30 hover:to-red-600/30 transition-all duration-300 border border-red-500/20 shadow-lg shadow-red-500/10"
+                >
+                  Logout
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex space-x-1 py-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                  selectedTab === tab.id 
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-white/10 shadow-lg shadow-purple-500/10' 
+                    : 'text-gray-400 hover:bg-white/5'
+                }`}
+              >
+                <tab.icon className={`w-5 h-5 ${selectedTab === tab.id ? 'text-blue-400' : 'text-gray-500'}`} />
+                <span className="text-sm font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -245,4 +264,4 @@ const ProfileScreen = () => {
   );
 };
 
-export default ProfileScreen; 
+export default ProfileScreen;
