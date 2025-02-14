@@ -1,4 +1,6 @@
-![Tapp Banner](public/images/banner.png)
+## 🚀 Building the future of private, incentivized data labeling on EDUChain 🚀
+- x.com - https://x.com/0xtapster
+- email - buddyharshal2751@gmail.com
 
 *Building the future of private, incentivized data labeling on EDUChain* 🚀
 ## Video Link : https://www.loom.com/share/5da783c74c444e959a500abf7afc2e2b?sid=913ce085-cb36-4212-bc15-e316007d903f
