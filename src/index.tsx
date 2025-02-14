@@ -4,70 +4,21 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
-
-// Wallet Integration Imports
-import { http } from 'viem';
-import { WagmiProvider, createConfig } from '@privy-io/wagmi';
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { PrivyProvider } from '@privy-io/react-auth';
-import type { PrivyClientConfig } from '@privy-io/react-auth';
 import store from "./store/store";
 import { Provider } from 'react-redux';
-import { openCampusCodex } from './config/chains';
-
-//  Chain Configuration
-
-
-export const wagmiConfig = createConfig({
-  chains: [openCampusCodex],
-  transports: {
-    [openCampusCodex.id]: http(openCampusCodex.rpcUrls.default.http[0]),
-  },
-});
-
-const privyConfig: PrivyClientConfig = {
-  appearance: {
-    walletList: ['coinbase_wallet'],
-  },
-  externalWallets: {
-    coinbaseWallet: {
-      // Valid connection options include 'eoaOnly' (default), 'smartWalletOnly', or 'all'
-      connectionOptions: 'smartWalletOnly',
-    },
-  },
-  embeddedWallets: {
-    createOnLogin: 'users-without-wallets',
-    requireUserPasswordOnCreate: true,
-    noPromptOnSignature: false,
-  },
-  defaultChain: openCampusCodex,
-  supportedChains: [openCampusCodex],
-  loginMethods: ['wallet', 'email', 'sms'],
-};
-
-// Setup queryClient
-const queryClient = new QueryClient();
-
+import {PrivyProvider} from '@privy-io/react-auth';
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 
 root.render(
   <React.StrictMode>
-    <PrivyProvider
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      appId='cm6owh66s002rlwuef0fvk51c'
-      config={privyConfig}
-    >
-      <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={wagmiConfig}>
-          <Provider store={store}>
-            <App />
-          </Provider>
-        </WagmiProvider>
-      </QueryClientProvider>
-    </PrivyProvider>
+    <Provider store={store}>
+      <PrivyProvider appId="cm2qign6s03s3mqfk6dbz71q1">
+      <App />
+      </PrivyProvider>
+
+    </Provider>
   </React.StrictMode>
 );
 

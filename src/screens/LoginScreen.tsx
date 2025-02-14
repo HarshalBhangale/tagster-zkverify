@@ -2,7 +2,7 @@
 "use client";
 import React from 'react';
 import { useNavigate } from "react-router-dom";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy } from '@privy-io/react-auth';
 
 interface VideoCardProps {
   src: string;
@@ -39,11 +39,13 @@ function VideoCard({ src, title, style }: VideoCardProps) {
 
 const LoginScreen = () => {
   const navigate = useNavigate();
-  const { ready, authenticated, login } = usePrivy();
+  const { login, ready, authenticated } = usePrivy();
 
-  if (!ready) {
-    return null;
-  }
+  React.useEffect(() => {
+    if (ready && authenticated) {
+      navigate('/screen3');
+    }
+  }, [ready, authenticated, navigate]);
 
   return (
     <section className="flex flex-col pt-32 pb-0 relative w-full min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -88,40 +90,21 @@ const LoginScreen = () => {
           </div>
 
           <div className="flex items-center gap-4 justify-start my-10 relative z-10">
-            {ready && !authenticated && (
-              <button
-                onClick={login}
-                className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
+            <button
+              onClick={login}
+              className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
+            >
+              Connect Wallet
+              <svg
+                className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Start Training
-                <svg
-                  className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </button>
-            )}
-            {ready && authenticated && (
-              <button
-                onClick={() => navigate("/screen3")}
-                className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-xl text-white font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
-              >
-                Continue Training
-                <svg
-                  className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </button>
-            )}
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -151,36 +134,6 @@ const LoginScreen = () => {
             }}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col items-center mt-10 mb-10">
-        <div className="flex flex-col sm:flex-row mb-2 lg:justify-start justify-center items-center">
-          <div className="flex flex-row items-center mb-4 sm:mb-0">
-            {['Data Scientist', 'AI Trainer', 'Annotator', 'ML Engineer', 'Researcher', 'Developer'].map((role, index) => (
-              <div key={role} className="-mr-4 relative group">
-                <div className="animation-container">
-                  <div 
-                    className="rounded-2xl overflow-hidden border-2 border-white/20 relative backdrop-blur-lg" 
-                    style={{ 
-                      opacity: 1, 
-                      transform: `scale(1) rotate(${Math.random() * 10 - 5}deg) translateZ(0px)`, 
-                      zIndex: 'auto' 
-                    }}
-                  >
-                    <img
-                      alt={role}
-                      src={`https://api.dicebear.com/6.x/personas/svg?seed=${role}`}
-                      className="object-cover object-top h-14 w-14 bg-gradient-to-br from-blue-500/20 to-emerald-500/20"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-white/60 text-sm ml-8 relative z-40 lg:text-left text-center">
-          Join our community of AI trainers and researchers
-        </p>
       </div>
     </section>
   );

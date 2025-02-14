@@ -3,11 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@privy-io/react-auth": "^1.88.3",
-    "@privy-io/wagmi": "0.2.12",
+    "@privy-io/react-auth": "^2.4.3",
     "@reduxjs/toolkit": "^2.3.0",
-    "@solana/web3.js": "^1.95.4",
-    "@tanstack/react-query": "^5.51.18",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -15,9 +12,11 @@
     "@types/node": "^17.0.45",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "ajv": "^8.17.1",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
     "dotenv": "^16.4.5",
+    "ethers": "^6.13.5",
     "framer-motion": "^12.0.0-alpha.0",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
@@ -29,10 +28,11 @@
     "react-router-dom": "^6.26.2",
     "react-scripts": "5.0.1",
     "react-slick": "^0.30.2",
+    "react-toastify": "^11.0.3",
     "slick-carousel": "^1.8.1",
     "stream-browserify": "^3.0.0",
     "typescript": "~4.9.5",
-    "viem": "^2.23.2",
+    "view": "^1.1.1",
     "wagmi": "^2.14.11",
     "web-vitals": "^2.1.4",
     "workbox-background-sync": "^6.6.0",
@@ -46,8 +46,7 @@
     "workbox-range-requests": "^6.6.0",
     "workbox-routing": "^6.6.0",
     "workbox-strategies": "^6.6.0",
-    "workbox-streams": "^6.6.0",
-    "zkverifyjs": "^0.6.0"
+    "workbox-streams": "^6.6.0"
   },
   "scripts": {
     "start": "react-app-rewired start",
@@ -85,6 +84,7 @@
     "stream-http": "^3.2.0",
     "tailwindcss": "^3.4.11",
     "url": "^0.11.4",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "vm-browserify": "^1.1.2"
   }
 }

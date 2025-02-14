@@ -1,17 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Navigation from "../components/Navigation";
-import { useAccount, useBalance } from "wagmi";
-import { usePrivy } from "@privy-io/react-auth";
-import { CategoryState } from "../store/stringSlice";
-import { RootState } from "../store/store";
-import { useSelector } from 'react-redux';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { IoCheckmarkCircleOutline, IoCloseCircleOutline } from 'react-icons/io5';
-import { openCampusCodex } from '../config/chains';
-import useZkVerify from "../hooks/useZkVerify";
-import useEduToken from "../hooks/useEduToken";
 
 const categories = [
   'automobile',
@@ -54,67 +45,14 @@ interface UserSelection {
 const CatConfirmationScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('cat');
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [bal, setBal] = useState(0);
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
-  const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   const [dragX, setDragX] = useState(0);
-  const { address } = useAccount();
-  const { data: addressData } = useBalance({ address });
-  const { ready, authenticated } = usePrivy();
   const [userSelections, setUserSelections] = useState<UserSelection[]>([]);
   const [swipeCount, setSwipeCount] = useState(0);
 
-  // zkVerify integration
-  const { verifyProof, isVerifying, verificationSuccess, verificationError } = useZkVerify();
-  
-  // EDU token integration
-  const { sendReward, isTransferring, isTransferred, transferError } = useEduToken();
-
-  useEffect(() => {
-    if (addressData) {
-      setBal(Number(addressData?.formatted) * 2500);
-    }
-  }, [addressData]);
-
   const currentData = getImagesForCategory(selectedCategory);
-
-  const handleVerificationAndReward = async (selections: UserSelection[]) => {
-    try {
-      setPopupTitle("Verifying your submissions...");
-      
-      // Generate proof data from user selections
-      const mockImageData = {
-        proof: {
-          // This would normally be generated from the circuit
-          pi_a: ["0x123", "0x456"],
-          pi_b: [["0x789", "0xabc"], ["0xdef", "0x012"]],
-          pi_c: ["0x345", "0x678"],
-          protocol: "groth16"
-        },
-        correctLabel: selections[selections.length - 1].label // For demo, use last selection
-      };
-
-      // Verify the proof
-      await verifyProof(mockImageData, selections[selections.length - 1].label);
-
-      if (verificationSuccess) {
-        setPopupTitle("Verification successful! Sending reward...");
-        // Send EDU token reward
-        const tx = await sendReward();
-        if (tx?.hash) {
-          const explorerUrl = `${openCampusCodex.blockExplorers.default.url}/tx/${tx.hash}`;
-          setPopupTitle(`🎉 Success! 0.001 EDU tokens sent to your wallet! <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-700 underline">View Transaction</a>`);
-        } else {
-          setPopupTitle("🎉 Success! 0.001 EDU tokens sent to your wallet!");
-        }
-      }
-    } catch (error: any) {
-      console.error('Verification or reward error:', error);
-      setPopupTitle(`❌ Error: ${error.message}`);
-    }
-  };
 
   const onTaskComplete = async () => {
     const newSwipeCount = swipeCount + 1;
@@ -122,7 +60,7 @@ const CatConfirmationScreen = () => {
     
     if (newSwipeCount === 3) {
       setIsPopupVisible(true);
-      await handleVerificationAndReward(userSelections);
+      setPopupTitle("Great job! You've completed 3 tags!");
     } else {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % currentData.length);
     }
@@ -148,18 +86,15 @@ const CatConfirmationScreen = () => {
     const swipe = swipePower(offset.x, velocity.x);
 
     if (swipe < -swipeConfidenceThreshold) {
-      setDirection("left");
-      handleButtonClick("Awesome, you completed 3 Tags today, reward on the way!", false);
+      handleButtonClick("Great job! Keep tagging!", false);
     } else if (swipe > swipeConfidenceThreshold) {
-      setDirection("right");
-      handleButtonClick("Awesome, you completed 3 Tags today, reward on the way!", true);
+      handleButtonClick("Great job! Keep tagging!", true);
     }
     setSwipeDirection(null);
     setDragX(0);
   };
 
   const handleButtonClick = async (title: string, isYes: boolean) => {
-    // Store user's selection
     setUserSelections(prev => [...prev, {
       category: selectedCategory,
       label: isYes ? 1 : 0,
@@ -181,30 +116,14 @@ const CatConfirmationScreen = () => {
     handleClosePopup();
   };
 
-  const renderVerificationStatus = () => {
-    if (isVerifying) return "🔄 Verifying your submissions...";
-    if (verificationError) return `❌ Verification failed: ${verificationError}`;
-    if (isTransferring) return "💸 Sending EDU tokens...";
-    if (transferError) return `❌ Token transfer failed: ${transferError}`;
-    if (isTransferred) return "✅ Success! 0.001 EDU tokens sent to your wallet!";
-    return null;
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-[#1a1b1e]">
       {/* Top Bar */}
       <div className="sticky top-0 z-40 bg-[#1a1b1e] p-4 border-b border-gray-800">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-xl font-bold text-white">Tapp</h1>
-          {ready && authenticated && (
-            <div className="flex items-center space-x-2">
-              <span className="bg-[#2c2d30] text-white px-4 py-2 rounded-full text-sm flex items-center">
-                💰 ${bal.toString().slice(0, 4)}
-              </span>
-            </div>
-          )}
         </div>
-        {/* Question Header - Moved from bottom */}
+        {/* Question Header */}
         <div className="mt-2">
           <p className="text-xl font-medium text-white text-center">
             {currentData[currentIndex].question}
@@ -249,147 +168,72 @@ const CatConfirmationScreen = () => {
               dragConstraints={{ left: 0, right: 0 }}
               onDrag={handleDrag}
               onDragEnd={handleDragEnd}
-              animate={{
-                rotate: dragX * 0.03,
-                scale: 1 - Math.abs(dragX) * 0.001,
-                background: swipeDirection === "right" 
-                  ? "linear-gradient(45deg, rgba(34,197,94,0.1), rgba(0,0,0,0))"
-                  : swipeDirection === "left"
-                  ? "linear-gradient(-45deg, rgba(239,68,68,0.1), rgba(0,0,0,0))"
-                  : "none"
+              className="relative w-full aspect-square rounded-3xl overflow-hidden shadow-xl"
+              style={{
+                x: dragX,
+                cursor: "grab"
               }}
-              className="bg-[#2c2d30] rounded-3xl shadow-2xl overflow-hidden h-[calc(100vh-16rem)] relative"
             >
-              {/* Image */}
-              <div className="relative h-full">
-                <img
-                  src={currentData[currentIndex].img}
-                  alt={`${selectedCategory} classification`}
-                  className="w-full h-full object-cover"
-                />
+              <img
+                src={currentData[currentIndex].img}
+                alt="Content"
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Swipe Indicators */}
+              <div className="absolute inset-0 flex items-center justify-between px-6 pointer-events-none">
+                <AnimatePresence>
+                  {swipeDirection === "left" && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      className="bg-red-500 rounded-full p-4"
+                    >
+                      <IoCloseCircleOutline className="w-12 h-12 text-white" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 
-                {/* Swipe Indicators */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: swipeDirection === "left" ? 1 : 0 }}
-                  className="absolute inset-0 bg-gradient-to-r from-red-500/30 to-transparent pointer-events-none"
-                >
-                  <div className="absolute left-8 top-1/2 -translate-y-1/2">
+                <AnimatePresence>
+                  {swipeDirection === "right" && (
                     <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ 
-                        scale: swipeDirection === "left" ? 1 : 0,
-                        rotate: swipeDirection === "left" ? 0 : -180
-                      }}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      className="bg-red-500 text-white w-24 h-24 rounded-full flex items-center justify-center shadow-lg"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      className="bg-green-500 rounded-full p-4"
                     >
-                      <IoCloseCircleOutline size={60} />
+                      <IoCheckmarkCircleOutline className="w-12 h-12 text-white" />
                     </motion.div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: swipeDirection === "right" ? 1 : 0 }}
-                  className="absolute inset-0 bg-gradient-to-l from-green-500/30 to-transparent pointer-events-none"
-                >
-                  <div className="absolute right-8 top-1/2 -translate-y-1/2">
-                    <motion.div
-                      initial={{ scale: 0, rotate: 180 }}
-                      animate={{ 
-                        scale: swipeDirection === "right" ? 1 : 0,
-                        rotate: swipeDirection === "right" ? 0 : 180
-                      }}
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      className="bg-green-500 text-white w-24 h-24 rounded-full flex items-center justify-center shadow-lg"
-                    >
-                      <IoCheckmarkCircleOutline size={60} />
-                    </motion.div>
-                  </div>
-                </motion.div>
-
-                {/* Swipe Direction Indicators */}
-                <motion.div
-                  initial={false}
-                  animate={{ opacity: Math.abs(dragX) > 0 ? 1 : 0 }}
-                  className="absolute inset-x-0 bottom-8 flex justify-center items-center space-x-4 pointer-events-none"
-                >
-                  <motion.div
-                    animate={{ 
-                      scale: dragX < 0 ? 1 : 0.5,
-                      opacity: dragX < 0 ? 1 : 0.3
-                    }}
-                    className="flex items-center space-x-2 bg-red-500/90 backdrop-blur-sm px-4 py-2 rounded-full"
-                  >
-                    <IoCloseCircleOutline className="text-white" />
-                    <span className="text-white font-medium">No</span>
-                  </motion.div>
-                  
-                  <motion.div
-                    animate={{ 
-                      scale: dragX > 0 ? 1 : 0.5,
-                      opacity: dragX > 0 ? 1 : 0.3
-                    }}
-                    className="flex items-center space-x-2 bg-green-500/90 backdrop-blur-sm px-4 py-2 rounded-full"
-                  >
-                    <IoCheckmarkCircleOutline className="text-white" />
-                    <span className="text-white font-medium">Yes</span>
-                  </motion.div>
-                </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Popup */}
-      {isPopupVisible && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 flex items-center justify-center z-50 bg-black/80"
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-[#2c2d30] p-6 rounded-3xl shadow-2xl w-11/12 max-w-md border border-gray-800"
-          >
-            <h3 
-              className="text-xl font-bold mb-4 text-center text-white"
-              dangerouslySetInnerHTML={{ __html: popupTitle }}
-            />
-
-            <div className="mb-4 text-sm text-gray-400">
-              {renderVerificationStatus()}
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {!isVerifying && !isTransferring && (
-                <>
-                  <button
-                    onClick={handleKeepTagging}
-                    className="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-3 rounded-full text-center font-medium transition-all duration-300"
-                  >
-                    Keep tagging
-                  </button>
-                  <button
-                    onClick={handleClosePopup}
-                    className="bg-[#3a3b3e] hover:bg-[#4a4b4e] text-white px-6 py-3 rounded-full text-center font-medium transition-all duration-300"
-                  >
-                    Close
-                  </button>
-                </>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-
       {/* Navigation */}
       <Navigation />
+
+      {/* Popup */}
+      {isPopupVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#2c2d30] rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-xl font-semibold text-white mb-4 text-center">
+              {popupTitle}
+            </h3>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleKeepTagging}
+                className="px-6 py-3 bg-[#4f46e5] text-white rounded-xl font-medium hover:bg-[#4338ca] transition-colors"
+              >
+                Keep Tagging
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

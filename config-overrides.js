@@ -1,43 +1,24 @@
 const webpack = require('webpack');
 
 module.exports = function override(config) {
-  // Add fallbacks for node modules
-  const fallback = config.resolve.fallback || {};
-  Object.assign(fallback, {
-    "crypto": require.resolve("crypto-browserify"),
-    "stream": require.resolve("stream-browserify"),
-    "assert": require.resolve("assert"),
-    "http": require.resolve("stream-http"),
-    "https": require.resolve("https-browserify"),
-    "os": require.resolve("os-browserify"),
-    "path": require.resolve("path-browserify"),
-    "url": require.resolve("url"),
-    "buffer": require.resolve("buffer"),
-    "process": require.resolve("process/browser"),
-    "fs": false,
-    "util": require.resolve("util"),
-    "zlib": require.resolve("browserify-zlib")
-  });
-  config.resolve.fallback = fallback;
+  config.resolve.fallback = {
+    ...config.resolve.fallback,
+    process: false,
+    zlib: require.resolve("browserify-zlib"),
+    stream: require.resolve("stream-browserify"),
+    util: require.resolve("util"),
+    buffer: require.resolve("buffer"),
+    asset: require.resolve("assert"),
+    fs: false,
+    os: require.resolve("os-browserify/browser"),
+    path: require.resolve("path-browserify"),
+    crypto: require.resolve("crypto-browserify"),
+    vm: require.resolve("vm-browserify")
+  };
 
-  // Add plugins
   config.plugins = (config.plugins || []).concat([
     new webpack.ProvidePlugin({
-      process: 'process/browser',
       Buffer: ['buffer', 'Buffer']
-    }),
-    new webpack.NormalModuleReplacementPlugin(/node:/, (resource) => {
-      const mod = resource.request.replace(/^node:/, "");
-      switch (mod) {
-        case "buffer":
-          resource.request = "buffer";
-          break;
-        case "stream":
-          resource.request = "readable-stream";
-          break;
-        default:
-          throw new Error(`Not found ${mod}`);
-      }
     })
   ]);
 

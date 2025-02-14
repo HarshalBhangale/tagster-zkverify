@@ -1,12 +1,54 @@
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
-import { usePrivy } from "@privy-io/react-auth";
 import { motion } from 'framer-motion';
 import { IoStatsChart, IoTrendingUp, IoTime, IoCheckmarkDone, IoWallet } from 'react-icons/io5';
+import { toast } from 'react-toastify';
+import { usePrivy } from '@privy-io/react-auth';
+import { ethers } from 'ethers';
+
+const TAGSTER_CONTRACT_ADDRESS = "0xA0831793F9Dd3B6E9449FA40227F73fF71bBb4De"; // Replace with your deployed contract address
+const TAGSTER_ABI = [
+  "function mintNFT(address recipient, string memory tokenURI) external",
+  "function maxSupply() public view returns (uint256)",
+  "function burnNFT(uint256 tokenId) external"
+];
 
 const ProfileScreen = () => {
-  const { ready, authenticated, logout, user } = usePrivy();
   const [selectedTab, setSelectedTab] = useState('stats');
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isMinting, setIsMinting] = useState(false);
+  const { user, authenticated } = usePrivy();
+
+  const handleMintNFT = async () => {
+    try {
+      setIsMinting(true);
+      if (!authenticated || !user?.wallet?.address) {
+        toast.error("Please connect your wallet first");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(TAGSTER_CONTRACT_ADDRESS, TAGSTER_ABI, signer);
+
+      // Replace with your IPFS metadata URI
+      const tokenURI = "ipfs://YOUR_METADATA_URI";
+      
+      const tx = await contract.mintNFT(user.wallet.address, tokenURI);
+      await tx.wait();
+      
+      toast.success("NFT minted successfully!");
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      toast.error("Failed to mint NFT. Please try again.");
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
+  const handleClaimRewards = () => {
+    toast.success("Rewards claimed successfully!");
+  };
 
   // Mock data - replace with real data from your backend
   const userStats = {
@@ -35,16 +77,12 @@ const ProfileScreen = () => {
     { id: 'activities', label: 'Activities', icon: IoTime },
   ];
 
-  if (!ready) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const toggleLogin = () => {
+    setIsLoggedIn(!isLoggedIn);
+  };
 
-  const userInitials = user?.email ? String(user.email).slice(0, 2).toUpperCase() : 'AI';
-  const userEmail = user?.email ? String(user.email) : 'Anonymous User';
+  const userInitials = 'AI';
+  const userEmail = 'user@example.com';
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -57,13 +95,23 @@ const ProfileScreen = () => {
             </div>
             <div className="flex items-center space-x-4">
               <button
+                onClick={handleMintNFT}
+                disabled={isMinting || !authenticated}
+                className={`px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-600/20 text-purple-400 font-medium hover:from-purple-500/30 hover:to-pink-600/30 transition-all duration-300 border border-purple-500/20 shadow-lg shadow-purple-500/10 ${
+                  isMinting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isMinting ? 'Minting...' : 'Mint OG NFT'}
+              </button>
+              <button
+                onClick={handleClaimRewards}
                 className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-600/20 text-emerald-400 font-medium hover:from-emerald-500/30 hover:to-teal-600/30 transition-all duration-300 border border-emerald-500/20 shadow-lg shadow-emerald-500/10"
               >
-                Claim OG NFT
+                Claim Rewards
               </button>
-              {authenticated && (
+              {isLoggedIn && (
                 <button
-                  onClick={logout}
+                  onClick={toggleLogin}
                   className="px-4 py-2 rounded-full bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 font-medium hover:from-red-500/30 hover:to-red-600/30 transition-all duration-300 border border-red-500/20 shadow-lg shadow-red-500/10"
                 >
                   Logout
@@ -206,8 +254,8 @@ const ProfileScreen = () => {
                 <IoWallet className="text-yellow-500 w-6 h-6" />
               </div>
               <div>
-                <p className="text-gray-400 text-sm">Total Earned</p>
-                <p className="text-2xl font-bold text-white">${userStats.earnings}</p>
+                <p className="text-gray-400 text-sm">Total Points</p>
+                <p className="text-2xl font-bold text-white">{userStats.earnings}</p>
               </div>
             </div>
           </motion.div>
@@ -251,7 +299,9 @@ const ProfileScreen = () => {
                     <p className="text-sm text-gray-400">{activity.time}</p>
                   </div>
                 </div>
-                <span className="text-green-400">+${activity.reward}</span>
+                <div className="text-right">
+                  <p className="font-medium text-white">{activity.reward} points</p>
+                </div>
               </motion.div>
             ))}
           </div>
