@@ -1,15 +1,11 @@
 import { http, createConfig } from 'wagmi';
 import { openCampusCodex } from './chains';
-import { walletConnect, injected } from 'wagmi/connectors';
 
+// Create wagmi config without connectors (Privy will handle this)
 const wagmiConfig = createConfig({
   chains: [openCampusCodex],
-  connectors: [
-    injected(),
-    walletConnect({ projectId: 'YOUR_PROJECT_ID' }),
-  ],
   transports: {
-    [openCampusCodex.id]: http(),
+    [openCampusCodex.id]: http(openCampusCodex.rpcUrls.default.http[0])
   },
 });
 

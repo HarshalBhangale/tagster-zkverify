@@ -10,16 +10,16 @@ export const openCampusCodex = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://open-campus-codex-sepolia.drpc.org'],
+      http: ['https://rpc.open-campus-codex.gelato.digital'],
     },
     public: {
-      http: ['https://open-campus-codex-sepolia.drpc.org'],
+      http: ['https://rpc.open-campus-codex.gelato.digital'],
     },
   },
   blockExplorers: {
     default: {
-      name: 'Open Campus Codex Explorer',
-      url: 'https://opencampus-codex.blockscout.com',
+      name: 'Codex Block Explorer',
+      url: 'https://educhain.blockscout.com',
     },
   },
   testnet: true

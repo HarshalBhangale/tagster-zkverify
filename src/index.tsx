@@ -10,18 +10,18 @@ import { http } from 'viem';
 import { WagmiProvider, createConfig } from '@privy-io/wagmi';
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { PrivyProvider } from '@privy-io/react-auth';
-import { baseSepolia } from 'viem/chains';
 import type { PrivyClientConfig } from '@privy-io/react-auth';
 import store from "./store/store";
 import { Provider } from 'react-redux';
+import { openCampusCodex } from './config/chains';
 
 //  Chain Configuration
 
 
 export const wagmiConfig = createConfig({
-  chains: [baseSepolia],
+  chains: [openCampusCodex],
   transports: {
-    [baseSepolia.id]: http(),
+    [openCampusCodex.id]: http(openCampusCodex.rpcUrls.default.http[0]),
   },
 });
 
@@ -40,7 +40,8 @@ const privyConfig: PrivyClientConfig = {
     requireUserPasswordOnCreate: true,
     noPromptOnSignature: false,
   },
-  defaultChain: baseSepolia,
+  defaultChain: openCampusCodex,
+  supportedChains: [openCampusCodex],
   loginMethods: ['wallet', 'email', 'sms'],
 };
 

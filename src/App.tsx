@@ -3,6 +3,8 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { PrivyProvider } from '@privy-io/react-auth';
+import { wagmiConfig } from './config/wagmi';
+import { openCampusCodex } from './config/chains';
 import LoginScreen from './screens/LoginScreen';
 import CatConfirmationScreen from './screens/MainScreen';
 import ShortsScreen from './screens/ShortsScreen';
@@ -15,7 +17,7 @@ const CLIENT_ID = "cm6owh66s002rlwuef0fvk51c";
 
 const App = () => {
   return (
-
+    <WagmiProvider config={wagmiConfig}>
       <PrivyProvider
         appId={CLIENT_ID}
         config={{
@@ -25,6 +27,8 @@ const App = () => {
             accentColor: '#676FFF',
             showWalletLoginFirst: false,
           },
+          defaultChain: openCampusCodex,
+          supportedChains: [openCampusCodex],
         }}
       >
         <Router>
@@ -37,7 +41,7 @@ const App = () => {
           </Routes>
         </Router>
       </PrivyProvider>
-
+    </WagmiProvider>
   );
 };
 
